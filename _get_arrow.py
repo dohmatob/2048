@@ -31,10 +31,10 @@ class GetArrow(object):
             elif arrow == '\x1b[D':
                 return "left"
             else:
-                print "Not an arrow arrow!"
+                print("Not an arrow arrow!")
                 return None
 
 if __name__ == '__main__':
     gk = GetArrow()
     for _ in range(1):
-        print gk()
+        print(gk())
