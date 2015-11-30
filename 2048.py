@@ -39,15 +39,21 @@ class Game2048(object):
         self.size = size
         self.grid = grid
         self.random_state = random_state
+        self.banner_printed_ = False
         self.load_batteries()
+
+    def print_banner(self):
+        if not self.banner_printed_:
+            print(banner)
+            self.banner_printed_ = True
 
     def load_batteries(self):
         """Some serious conf business."""
-        print(banner)
         self.rng_ = np.random.RandomState(self.random_state)
 
         # get size of grid
         if self.size is None:
+            self.print_banner()
             while not self.size in self._SIZES:
                 try:
                     self.size = int(input_grabber(
@@ -74,7 +80,6 @@ class Game2048(object):
 
     def get_move(self):
         """Get next move from input sensor (screen, etc.)."""
-        print(self)
         if self.mode == "arrows":
             mv = GetArrow()()
             if not mv is None:
@@ -165,10 +170,7 @@ class Game2048(object):
         return self._horizontal_move(right=True)
 
     def move(self, mv):
-        """Make specified move.
-
-        I = up, J = left, K = down, L = right.
-        """
+        """Make specified move."""
         if mv == "I":
             return self.up()
         elif mv == "J":
@@ -197,6 +199,7 @@ class Game2048(object):
 
     def play(self):
         """Play game."""
+        self.print_banner()
         if self.mode == "arrows":
             print("Use arrows (up, down, left, right) to play game")
         else:
@@ -204,6 +207,7 @@ class Game2048(object):
                    "left, K = down, L = right"))
         print("Note : enter an empty line to stop the game")
         while True:
+            print(self)
             mv = self.get_move()
             if mv is None:
                 print("Game aborted by user")
