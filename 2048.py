@@ -75,7 +75,7 @@ class Game2048(object):
 
     def get_params(self):
         """Get all parameters of class instance."""
-        return dict(size=self.size, grid=self.grid_,
+        return dict(size=self.size, grid=self.grid_.copy(),
                     random_state=self.random_state)
 
     def get_move(self):
