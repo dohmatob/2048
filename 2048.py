@@ -79,10 +79,10 @@ class Game2048(object):
         return out
 
     def evolve(self):
-        """Fill a random empty cell with 2."""
+        """Fill a random empty cell with 2 (or 4, with very small proba)."""
         z = np.where(self.grid_ == 0.)
         i = self.rng_.choice(len(z[0]))
-        self.grid_[z[0][i], z[1][i]] = 2
+        self.grid_[z[0][i], z[1][i]] = self.rng_.choice([2, 4], p=[.9, .1])
         return self
 
     def _squeeze(self, v, down=True):
