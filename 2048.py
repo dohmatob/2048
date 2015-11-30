@@ -51,8 +51,8 @@ class Game2048(object):
             while not self.size in self._SIZES:
                 try:
                     self.size = int(input_grabber(
-                        ("<> Enter game configuration (size in %s, etc.):"
-                         " ") % self._SIZES))
+                        ("<> Enter game size (can be %s):"
+                         " ") % ", ".join([str(s) for s in self._SIZES])))
                 except ValueError:
                     continue
 
