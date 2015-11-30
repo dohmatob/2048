@@ -3,6 +3,7 @@
 
 from __future__ import print_function
 import sys
+from nose.tools import assert_false
 try:
     import numpy as np
 except ImportError:
@@ -74,6 +75,8 @@ class Game2048(object):
 
         # get size of grid
         if self.size is None:
+            if not self.grid is None:
+                self.size = len(self.grid)
             self.print_banner()
             while not self.size in SIZES:
                 try:
@@ -92,12 +95,20 @@ class Game2048(object):
             self.grid_[indices[support[0]][1],
                        indices[support[1]][1]] = self.rng_.choice([2, 4])
         else:
-            self.grid_ = np.array(self.grid).copy()
+            self.grid_ = np.array(self.grid, dtype=int).copy()
 
     def get_params(self):
         """Get all parameters of class instance."""
         return dict(size=self.size, grid=self.grid_.copy(),
                     random_state=self.random_state)
+
+    def clone(self):
+        """Clone class instance."""
+        return Game2048(**self.get_params())
+
+    def __eq__(self, other):
+        """Compare game with another instance."""
+        return np.all(self.grid_ == other.grid_)
 
     def get_move(self):
         """Get next move from input sensor (screen, etc.)."""
@@ -118,10 +129,6 @@ class Game2048(object):
                 if not mv:
                     mv = None
         return mv
-
-    def clone(self):
-        """Clone class instance."""
-        return Game2048(**self.get_params())
 
     def __repr__(self):
         """Converts "2048" board to a string."""
@@ -245,6 +252,25 @@ class Game2048(object):
             print("Game over. Your score is %i" % self.score)
         else:
             print("Bravo! You completed the game with score %i" % self.score)
+
+
+def test_horizontal_move():
+    game = Game2048(grid=[[2, 0], [0, 2]])
+    np.testing.assert_array_equal(game.clone().right().grid_, [[0, 2], [0, 2]])
+    np.testing.assert_array_equal(game.clone().left().grid_, [[2, 0], [2, 0]])
+
+
+def test_vertical_move():
+    game = Game2048(grid=[[2, 0], [2, 0]])
+    np.testing.assert_array_equal(game.clone().up().grid_, [[4, 0], [0, 0]])
+    np.testing.assert_array_equal(game.clone().down().grid_, [[0, 0], [4, 0]])
+
+
+def test_clone():
+    game = Game2048(grid=[[2, 0], [0, 2]])
+    clone = game.clone()
+    clone.right()
+    assert_false(game == clone)
 
 
 class Drunkard(object):
