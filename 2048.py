@@ -203,7 +203,6 @@ class Game2048(object):
             print(("The player enters direction for movement : I = up, J = "
                    "left, K = down, L = right"))
         print("Note : enter an empty line to stop the game")
-        print("=" * 80)
         while True:
             mv = self.get_move()
             if mv is None:
