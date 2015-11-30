@@ -12,9 +12,12 @@ except ImportError:
 from _get_arrow import GetArrow
 
 # raw_input doesn't exist in Python3 (renamed to "input")
-input_grabber = input if sys.version_info.major == 3 else raw_input
+INPUT_GRABBER = input if sys.version_info.major == 3 else raw_input
 
-banner = """
+# misc
+SIZES = [2, 4, 8]
+MOVES = dict(up="I", down="K", left="J", right="L")
+BANNER = """
   ________________________________________________________________
 < 2048 game dedicated to the young dr. alex jr., @ parietal _team_ >
   ----------------------------------------------------------------
@@ -28,23 +31,41 @@ banner = """
 
 
 class Game2048(object):
+    """
+    Abstraction of the 2048 game.
 
-    _SIZES = [2, 4, 8]  # allowed sizes for the game grid
+    Paramters
+    ---------
+    size : int in [2, 4, 8], optional (default None)
+        Size of game board.
 
-    def __init__(self, size=None, grid=None, random_state=None, mode='arrows'):
+    grid : 2D array of shape (size, size), optional (default None)
+        Values to initialize game board (useful for cloning game instances)
+
+    mode : string in ["arrows", "letters"], optional (default "arrows")
+        Specifies how input is presented to the game.
+
+    mover : callable, optional (default None)
+        Returns next move to be made. If none, next moves will asked at the
+        stdin as game play proceeds.
+    """
+
+    def __init__(self, size=None, grid=None, random_state=None, mode='arrows',
+                 mover=None):
         # misc
         if not mode in ["arrows", "letters"]:
             raise ValueError("Invalid mode: %s" % mode)
         self.mode = mode
         self.size = size
         self.grid = grid
+        self.mover = mover
         self.random_state = random_state
         self.banner_printed_ = False
         self.load_batteries()
 
     def print_banner(self):
         if not self.banner_printed_:
-            print(banner)
+            print(BANNER)
             self.banner_printed_ = True
 
     def load_batteries(self):
@@ -54,11 +75,11 @@ class Game2048(object):
         # get size of grid
         if self.size is None:
             self.print_banner()
-            while not self.size in self._SIZES:
+            while not self.size in SIZES:
                 try:
-                    self.size = int(input_grabber(
+                    self.size = int(INPUT_GRABBER(
                         ("<> Enter game size (can be %s):"
-                         " ") % ", ".join([str(s) for s in self._SIZES])))
+                         " ") % ", ".join([str(s) for s in SIZES])))
                 except ValueError:
                     continue
 
@@ -80,24 +101,27 @@ class Game2048(object):
 
     def get_move(self):
         """Get next move from input sensor (screen, etc.)."""
-        if self.mode == "arrows":
+        if not self.mover is None:
+            mv = self.mover(self.clone())
+            print("<> Performing %s" % [k for k, v in MOVES.items()
+                                        if v == mv][0])
+        elif self.mode == "arrows":
             mv = GetArrow()()
             if not mv is None:
-                return dict(up="I", down="K", left="J", right="L")[mv]
-            return None
-        mv = "X"
-        while not mv in ["I", "J", "K", "L"]:
-            mv = input_grabber(("<> Enter direction for movement "
-                                "(I=u,J=left,K=down, L=right) : "))
+                mv = MOVES[mv]
+        else:
+            while not mv in ["I", "J", "K", "L"]:
+                mv = INPUT_GRABBER(("<> Enter direction for movement "
+                                    "(I=u,J=left,K=down, L=right) : "))
 
-            # check empty line
-            if not mv:
-                return
+                # check empty line
+                if not mv:
+                    mv = None
         return mv
 
     def clone(self):
         """Clone class instance."""
-        return Game2048(*self.get_params)
+        return Game2048(**self.get_params())
 
     def __repr__(self):
         """Converts "2048" board to a string."""
@@ -221,6 +245,17 @@ class Game2048(object):
             print("Game over. Your score is %i" % self.score)
         else:
             print("Bravo! You completed the game with score %i" % self.score)
+
+
+class Drunkard(object):
+    """Random strategy player."""
+
+    def __init__(self, random_state=None):
+        self.random_state = random_state
+        self.rng_ = np.random.RandomState(random_state)
+
+    def __call__(self, game):
+        return MOVES.values()[self.rng_.choice(range(len(MOVES)))]
 
 
 if __name__ == "__main__":
