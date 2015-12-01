@@ -1,3 +1,6 @@
+# This i/o code is conveniently adapted from
+# http://stackoverflow.com/a/22398481/1080358
+
 import sys
 import tty
 import termios

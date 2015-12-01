@@ -62,14 +62,14 @@ class Game2048(object):
         self.mover = mover
         self.random_state = random_state
         self.banner_printed_ = False
-        self.load_batteries()
+        self._load_batteries()
 
     def print_banner(self):
         if not self.banner_printed_:
             print(BANNER)
             self.banner_printed_ = True
 
-    def load_batteries(self):
+    def _load_batteries(self):
         """Some serious conf business."""
         self.rng_ = np.random.RandomState(self.random_state)
 
