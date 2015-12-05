@@ -3,7 +3,7 @@
 
 from __future__ import print_function
 import sys
-from nose.tools import assert_false
+from nose.tools import assert_false, assert_true
 try:
     import numpy as np
 except ImportError:
@@ -62,6 +62,7 @@ class Game2048(object):
         self.mover = mover
         self.random_state = random_state
         self.banner_printed_ = False
+        self.aborted_ = False
         self._load_batteries()
 
     def print_banner(self):
@@ -109,6 +110,10 @@ class Game2048(object):
     def __eq__(self, other):
         """Compare game with another instance."""
         return np.all(self.grid_ == other.grid_)
+
+    def __ne__(self, other):
+        """Compare game with another instance."""
+        return np.any(self.grid_ != other.grid_)
 
     def get_move(self):
         """Get next move from input sensor (screen, etc.)."""
@@ -226,7 +231,15 @@ class Game2048(object):
     @property
     def ended(self):
         """Check whether game has ended."""
-        return self.full or self.score >= 2048
+        if self.aborted_ or self.score >= 2048:
+            return True
+        else:
+            # dead-end detection
+            for mv in MOVES.values():
+                game = self.clone().move(mv)
+                if game != self:
+                    return False
+            return True
 
     def play(self):
         """Play game."""
@@ -237,14 +250,21 @@ class Game2048(object):
             print(("The player enters direction for movement : I = up, J = "
                    "left, K = down, L = right"))
         print("Note : enter an empty line to stop the game")
-        while True:
+        while not self.ended:
             print(self)
-            mv = self.get_move()
-            if mv is None:
-                print("Game aborted by user")
-                break
-            self.move(mv)
-            if self.full:
+            while True:
+                mv = self.get_move()
+                old_game = self.clone()
+                game = self.clone()
+                if mv is None:
+                    print("Game aborted by user")
+                    game.aborted_ = True
+                    break
+                game.move(mv)
+                if game != old_game:
+                    break
+            self.grid_ = game.grid_
+            if self.ended:
                 break
             self.evolve()
         print(self)
@@ -252,6 +272,17 @@ class Game2048(object):
             print("Game over. Your score is %i" % self.score)
         else:
             print("Bravo! You completed the game with score %i" % self.score)
+
+
+class Drunkard(object):
+    """Random strategy player."""
+
+    def __init__(self, random_state=None):
+        self.random_state = random_state
+        self.rng_ = np.random.RandomState(random_state)
+
+    def __call__(self, game):
+        return MOVES.values()[self.rng_.choice(range(len(MOVES)))]
 
 
 def test_horizontal_move():
@@ -273,16 +304,10 @@ def test_clone():
     assert_false(game == clone)
 
 
-class Drunkard(object):
-    """Random strategy player."""
-
-    def __init__(self, random_state=None):
-        self.random_state = random_state
-        self.rng_ = np.random.RandomState(random_state)
-
-    def __call__(self, game):
-        return MOVES.values()[self.rng_.choice(range(len(MOVES)))]
-
+def test_play():
+    game = Game2048(mover=Drunkard(), size=2)
+    game.play()
+    assert_true(game.score >= 2.)
 
 if __name__ == "__main__":
     Game2048().play()
